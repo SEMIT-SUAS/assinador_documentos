@@ -13,4 +13,5 @@ ENV DATABASE_URL=postgresql+psycopg://postgres:postgres@db:5432/assinador \
 
 EXPOSE 5000
 
-CMD ["python", "app.py"]
+CMD ["gunicorn", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "--bind", "0.0.0.0:5000", "app:app"]
+
