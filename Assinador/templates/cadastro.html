@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Cadastro de Usuários</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <!-- Fonte opcional (visual moderno) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- CSS do projeto -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/cadastro.css') }}">
+</head>
+
+<body class="bg-surface">
+  <div class="container-lg py-4">
+
+    <!-- Cabeçalho / Ações -->
+    <div class="page-header d-flex flex-wrap align-items-center gap-2 mb-4">
+      <a href="{{ url_for('auth.login') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> <span class="d-none d-sm-inline">Voltar</span>
+      </a>
+      <div class="vr d-none d-sm-flex"></div>
+      <h1 class="h4 mb-0 fw-semibold">Cadastro de Usuários</h1>
+    </div>
+
+    <!-- Card: Formulário -->
+    <div class="card card-elev mb-4">
+      <div class="card-body">
+        <div class="section-title">
+          <i class="bi bi-person-plus-fill me-2"></i> <span>Dados do usuário</span>
+        </div>
+
+        <form method="POST" action="{{ url_for('cadastro') }}" class="needs-validation" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="editar_email" value="{{ usuario_editar.email if usuario_editar else '' }}">
+
+
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="nome">Nome</label>
+              <div class="input-group input-group-lg has-icon">
+                <span class="input-group-text" aria-hidden="true"><i class="bi bi-person-fill"></i></span>
+                <input type="text" class="form-control" id="nome" name="nome"
+                       value="{{ usuario_editar.nome if usuario_editar else '' }}" required>
+                <div class="invalid-feedback">Informe o nome completo.</div>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="email">E-mail</label>
+              <div class="input-group input-group-lg has-icon">
+                <span class="input-group-text" aria-hidden="true"><i class="bi bi-envelope-fill"></i></span>
+                <input type="email" class="form-control" id="email" name="email"
+                  value="{{ usuario_editar.email if usuario_editar else '' }}"
+                  required>
+                <div class="invalid-feedback">Informe um e-mail válido.</div>
+              </div>
+            </div>
+            
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="cpf">CPF</label>
+                <div class="input-group input-group-lg has-icon">
+                  <span class="input-group-text" aria-hidden="true"><i class="bi bi-card-text"></i></span>
+
+                {# Quando for edição, o input começa desabilitado e vazio #}
+                <input
+                type="text"
+                class="form-control"
+                id="cpf"
+                name="cpf"
+                inputmode="numeric"
+                maxlength="11"
+                pattern="\d{11}"
+                placeholder="Apenas números"
+                value="{{ '' if usuario_editar else '' }}"
+                {{ 'disabled' if usuario_editar else '' }}
+                {{ '' if not usuario_editar else '' }}
+                {{ 'required' if not usuario_editar else '' }}
+                >
+                <div class="invalid-feedback">Digite 11 números.</div>
+                </div>
+
+              {% if usuario_editar %}
+              <div class="form-text mt-1" id="btnAlterarCPF">
+              CPF atual: <code>{{ usuario_editar.cpf_masked }}</code>
+              </div>
+              <button type="button" id="btnAlterarCPF" class="btn btn-sm btn-outline-secondary mt-2" >
+              Alterar CPF
+              </button>
+              <input type="hidden" name="cpf_change" id="cpf_change" value="0">
+              {% endif %}
+            </div>
+
+
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="setor">Setor</label>
+              <div class="input-group input-group-lg has-icon">
+                <span class="input-group-text" aria-hidden="true"><i class="bi bi-person-fill"></i></span>
+                <input type="text" class="form-control" id="setor" name="setor"
+                  value="{{ usuario_editar.setor if usuario_editar else '' }}"required>
+                <div class="invalid-feedback">Informe o setor.</div>
+              </div>
+            </div>
+
+            
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="matricula">Matrícula</label>
+              <div class="input-group input-group-lg has-icon">
+                <span class="input-group-text" aria-hidden="true"><i class="bi bi-person-fill"></i></span>
+                <input type="text" class="form-control" id="matricula" name="matricula"
+                      value="{{ usuario_editar.matricula if usuario_editar else '' }}" required>
+                <div class="invalid-feedback">Informe a matrícula.</div>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="orgao">Orgão</label>
+              <div class="input-group input-group-lg has-icon">
+                <span class="input-group-text" aria-hidden="true"><i class="bi bi-person-fill"></i></span>
+                <input type="text" class="form-control" id="orgao" name="orgao"
+                  value="{{ usuario_editar.orgao if usuario_editar else '' }}" required>
+                <div class="invalid-feedback">Informe o orgão.</div>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label" for="cargo">Cargo</label>
+              <div class="input-group input-group-lg has-icon">
+                <span class="input-group-text" aria-hidden="true"><i class="bi bi-person-fill"></i></span>
+                <input type="text" class="form-control" id="cargo" name="cargo"
+                      value="{{ usuario_editar.cargo if usuario_editar else '' }}"
+required>
+                <div class="invalid-feedback">Informe o cargo.</div>
+              </div>
+            </div>
+
+          
+          </div>
+
+          <div class="d-flex flex-wrap gap-2 mt-4">
+            <button type="submit" class="btn btn-primary">
+             {{ 'Atualizar' if usuario_editar else 'Cadastrar' }}
+            </button>
+            {% if usuario_editar %}
+              <a href="{{ url_for('cadastro') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-circle me-1"></i> Cancelar
+              </a>
+            {% endif %}
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Card: Lista de usuários -->
+    <div class="card card-elev">
+      <div class="card-body">
+        <div class="section-title d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <div>
+            <i class="bi bi-people-fill me-2"></i> <span>Usuários cadastrados</span>
+          </div>
+          <div id="search-register" class="d align-items-center gap-2">
+            <div class="search-wrap">
+              
+              <input type="search" id="userSearch" class="form-control form-control-sm"
+                     placeholder="Filtrar por nome ou e-mail..."><i class="bi bi-search"></i>
+            </div>
+            <div>
+                <span class="badge text-bg-light" id="userCount">
+                {% if usuarios %}{{ usuarios|length }}{% else %}0{% endif %} registros
+                </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive table-wrapper mt-3">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-head sticky-top">
+              <tr>
+                <th class="min-w-330">Ações</th>
+                <th class="min-w-180">Nome</th>
+                <th class="min-w-220">E-mail</th>
+                <th class="min-w-140">CPF</th>
+                <th class="min-w-220">Orgão</th>
+                <th class="min-w-220">Setor</th>
+                <th class="min-w-220">Matrícula</th>
+                <th class="min-w-220">Cargo</th>
+                <th class="min-w-160">Criado em</th>
+                <th class="min-w-160">Atualizado em</th>
+                
+              </tr>
+            </thead>
+            <tbody id="userTableBody">
+              {% for usuario in usuarios %}
+                <tr>
+                  <td class="text-end">
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Ações">
+                      <a href="{{ url_for('editar', email=usuario.email) }}" class="btn btn-warning">
+                        <i class="bi bi-pencil-square"></i> <span class="d-none d-xl-inline">Editar</span>
+                      </a>
+                      <form method="POST" action="{{ url_for('excluir') }}" class="d-inline"
+                          onsubmit="return confirm('Confirmar exclusão?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="email" value="{{ usuario.email }}">
+                        <button class="btn btn-danger btn-sm">
+                          <i class="bi bi-trash"></i> <span class="d-none d-xl-inline">Excluir</span>
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+
+                  <td>{{ usuario.nome }}</td>
+                  <td><span class="text-break">{{ usuario.email }}</span></td>
+                  <td><code class="small">{{ usuario.cpf_masked }}</code></td>
+                  <td><span class="text-break">{{ usuario.orgao }}</span></td>
+                  <td><span class="text-break">{{ usuario.setor }}</span></td>
+                  <td><span class="text-break">{{ usuario.matricula }}</span></td>
+                  <td><span class="text-break">{{ usuario.cargo }}</span></td>
+                  <td>{{ usuario.created_at|fmt_dt }}</td>
+                  <td>{{ usuario.updated_at|fmt_dt }}</td>
+                  
+
+                  
+                </tr>
+              {% endfor %}
+              {% if not usuarios %}
+                <tr>
+                  <td colspan="6" class="text-center text-muted py-4">
+                    <i class="bi bi-inboxes me-1"></i> Nenhum usuário cadastrado.
+                  </td>
+                </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- JS Bootstrap + scripts leves -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Validação Bootstrap
+    (() => {
+      const forms = document.querySelectorAll('.needs-validation');
+      Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+          if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          form.classList.add('was-validated');
+        }, false);
+      });
+    })();
+
+    document.getElementById('btnAlterarCPF')?.addEventListener('click', () => {
+      const cpf = document.getElementById('cpf');
+      const flag = document.getElementById('cpf_change');
+      if (!cpf || !flag) return;
+      cpf.disabled = false;
+      cpf.required = true;
+      cpf.value = '';
+      cpf.focus();
+      flag.value = '1';
+    });
+
+
+
+    // Filtro simples por nome/e-mail
+    (function () {
+      const input = document.getElementById('userSearch');
+      const tbody = document.getElementById('userTableBody');
+      const rows = () => Array.from(tbody.querySelectorAll('tr'));
+      const count = document.getElementById('userCount');
+
+      function update() {
+        const q = (input.value || '').trim().toLowerCase();
+        let visible = 0;
+        rows().forEach(tr => {
+          // ignora a linha "Nenhum usuário..." (colspan)
+          const tds = tr.querySelectorAll('td');
+          if (tds.length < 6) { tr.style.display = ''; return; }
+          const nome = tds[0].innerText.toLowerCase();
+          const email = tds[1].innerText.toLowerCase();
+          const cpf = tds[2].innerText.toLowerCase();
+          const matricula = tds[3].innerText.toLowerCase();
+          const orgao = tds[4].innerText.toLowerCase();
+          const setor = tds[5].innerText.toLowerCase();
+          const cargo = tds[6].innerText.toLowerCase();
+
+          const match = !q || nome.includes(q) || email.includes(q);
+          tr.style.display = match ? '' : 'none';
+          if (match) visible++;
+        });
+        if (count) count.textContent = `${visible} registro${visible === 1 ? '' : 's'}`;
+      }
+
+      input?.addEventListener('input', update);
+    })();
+  </script>
+</body>
+</html>

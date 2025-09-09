@@ -1,0 +1,142 @@
+/* ---------- Variáveis de tema ---------- */
+:root{
+  --bg: #f5f6f8;
+  --card-bg: #ffffff;
+  --text: #1f2937;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --field-bg: #f8fafc;
+  --focus: rgba(13,110,253,.15);
+  --focus-border: rgba(13,110,253,.5);
+  --toast-bg: #ffffff;
+  --toast-text: #0b1324;
+  --shadow-lg: 0 20px 50px rgba(0,0,0,.08);
+  --shadow-sm: 0 6px 18px rgba(0,0,0,.06);
+}
+
+
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+/* Card de login */
+.login-card{
+  font-size: 1rem;
+  width: 100%;
+  max-width: 380px;
+  height: 100%;
+  max-height: 500px;
+  background: var(--card-bg);
+  border-radius: 14px;
+  padding: 22px 22px 24px;
+  box-shadow: var(--shadow-lg);
+
+}
+
+.form-label {
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+/* Divisor “ou” */
+.divider{
+  display:flex; align-items:center; gap:.75rem; color: var(--muted);
+}
+.divider::before,
+.divider::after{
+  content:""; flex:1; height:1px; background: var(--line);
+}
+.divider span{ font-size:1rem; }
+
+/* Input group com ícone */
+.has-icon .input-group-text{
+  font-size: 0.90rem;
+  background: var(--field-bg);
+  border-right: 0;
+  color: var(--text);
+}
+.has-icon .form-control{
+  font-size: 0.90rem;
+  border-left: 0;
+  color: var(--text);
+  background: #fff;
+}
+
+.input-group:focus-within .input-group-text,
+.input-group:focus-within .form-control,
+.input-group:focus-within .btn{
+  border-color: var(--focus-border) !important;
+  box-shadow: 0 0 0 .10rem var(--focus) !important;
+  
+}
+
+/* Botão do CPF (mantém visual consistente) */
+
+.input-group .btn {
+  font-size: 0.90rem;
+  border-color: var(--line);
+  color: var(--text);
+}
+.input-group .btn:hover,
+.input-group .btn:focus{
+  border-color: var(--line);
+  box-shadow: none;
+}
+
+/* Toasts */
+.custom-toast{
+  min-width: 320px;
+  border: 0;
+  color: var(--toast-text);
+  background: var(--toast-bg);
+  box-shadow: var(--shadow-sm);
+}
+.custom-toast.toast-success { border-left: 4px solid #198754; }
+.custom-toast.toast-warning { border-left: 4px solid #ffc107; }
+.custom-toast.toast-info    { border-left: 4px solid #0dcaf0; }
+.custom-toast.toast-error   { border-left: 4px solid #dc3545; }
+
+/* Botão primário grande */
+.btn-lg{
+  padding: .3rem 0.50rem;
+  font-weight: 400;
+  font-size: 1rem;
+}
+
+/* Responsividade */
+@media (max-width: 400px){
+  .login-card{ padding: 18px 16px; border-radius: 12px; }
+  .input-group.input-group-lg .form-control,
+  .input-group.input-group-lg .input-group-text{
+    font-size: 1rem;
+    padding: .6rem .75rem;}
+  .userCount{display: block;}
+  
+
+  /* Card de login */
+  .login-card{
+    font-size: 1rem;
+    width: 100%;
+    max-width: 380px;
+    height: 100%;
+    max-height: 600px;
+    background: var(--card-bg);
+    border-radius: 14px;
+    padding: 22px 22px 24px;
+    box-shadow: var(--shadow-lg);
+
+}
+
+  
+  body {
+    color: var(--card-bg);
+  }
+
+  .btn-lg{ padding: .3rem .5rem;font-family: 400;font-size: 1rem;}
+
+  }
