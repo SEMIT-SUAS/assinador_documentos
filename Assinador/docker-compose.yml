@@ -4,57 +4,80 @@ services:
   web:
     build: .
     container_name: assinador_web
+    # Para acessar via http://SEU_IP:5000/
+    # Se quiser via porta 80 do host: troque para "80:5000"
     ports:
       - "5000:5000"
     environment:
-      - DATABASE_URL=postgresql+psycopg://postgres:postgres@db:5432/assinador
-      - SECRET_KEY=S3m1t!@#
+      # pode mover para um arquivo .env e usar `env_file: .env`
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/assinador
+      SECRET_KEY: S3m1t!@#
+      FLASK_ENV: production
     depends_on:
       db:
         condition: service_healthy
     volumes:
+      # Útil em DEV. Em produção, prefira remover essa linha.
       - .:/app
+      # Caso sua app salve PDFs/arquivos em /app/storage, persista:
+      - app_data:/app/storage
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
     networks:
       - mynetwork
 
   db:
     image: postgres:15
     container_name: assinador_db
-    restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: assinador
+      # Opcional: timezone/locale
+      # TZ: America/Fortaleza
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d assinador"]
       interval: 5s
       retries: 5
       timeout: 5s
+    
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./db_init/assinador_dump.sql:/docker-entrypoint-initdb.d/assinador_dump.sql
+      # Restaura dump inicial automaticamente (se existir)
+      - ./db_init/assinador_dump.sql:/docker-entrypoint-initdb.d/assinador_dump.sql:ro
+    restart: unless-stopped
     networks:
       - mynetwork
 
-
-  phpmyadmin: 
+  pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin
-    restart: always
+    restart: unless-stopped
     ports:
-      - "8080:80"
+      - "8080:80"  # acessa via http://SEU_IP:8080
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
+      # Se quiser modo single-user:
+      # PGADMIN_CONFIG_SERVER_MODE: 'False'
     volumes:
-      - ./pgadmin_config/servers.json:/pgadmin4/servers.json
+      # servers.json (opcional) com conexões pré-configuradas
+      - ./pgadmin_config/servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - mynetwork
 
 volumes:
   postgres_data:
+  # app_data:
 
 networks:
   mynetwork:

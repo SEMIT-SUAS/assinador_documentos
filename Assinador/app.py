@@ -26,7 +26,9 @@ from auth import (
 )
 
 app = Flask(__name__)
-
+@app.get("/health")
+def health():
+    return "OK", 200
 # ------------------ Config de Banco ------------------
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
     "DATABASE_URL",
