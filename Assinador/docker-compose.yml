@@ -77,7 +77,7 @@ services:
 
 volumes:
   postgres_data:
-  # app_data:
+  app_data:
 
 networks:
   mynetwork:
