@@ -20,7 +20,7 @@ services:
       # Útil em DEV. Em produção, prefira remover essa linha.
       - .:/app
       # Caso sua app salve PDFs/arquivos em /app/storage, persista:
-      - app_data:/app/storage
+      - app_data:/app/storage:rw
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:5000/health || exit 1"]
       interval: 15s
