@@ -101,35 +101,34 @@
 
       <!-- Arquivo -->
       <div class="mb-3">
-        <label class="form-label">Arquivo (.png, .jpg, .jpeg, .pdf):</label>
-        <input accept=".png,.jpg,.jpeg,.pdf" name="arquivo" onchange="handleFile(this)" required type="file" class="form-control">
+        
+        <input id="arquivo-upload" accept=".png,.jpg,.jpeg,.pdf" name="arquivo" onchange="handleFile(this)" required type="file" class="d-none">
+        <label class="btn btn-secondary" for="arquivo-upload">Escolher arquivo</label>
+        <label class="form-label">(.pdf):</label>
+        
       </div>
 
       <!-- Centralizar -->
       <div id="centralizar-button" class="mb-3">
-        <button type="button" id="btnCenterH" class="btn btn-outline-primary btn-icon">
+        <button type="button" id="btnCenterH" class="btn btn-outline-primary btn-icon" 
+        title="Posicina o carimbo bem no meio da largura da folha, nem para a esquerda, nem para a direita.">
           <img width="20" height="20" src="https://img.icons8.com/ios-filled/24/A1A3A6/resize-horizontal.png" alt="">
           Centralizar Horizontal
         </button>
-        <button type="button" id="btnCenterV" class="btn btn-outline-primary btn-icon">
+        <button type="button" id="btnCenterV" class="btn btn-outline-primary btn-icon"  title="Posiciona o carimbo bem no meio da altura da folha, nem para cima, nem para baixo.">
           <img width="20" height="20" src="https://img.icons8.com/ios-filled/24/A1A3A6/resize-vertical.png" alt="">
           Centralizar Vertical
         </button>
       </div>
-      
       <div class="mb-3">
-        <label class="form-label" for="status">Status:</label>
-        <select name="status" id="status" required class="form-control">
-          <option value="" disabled selected>Escolha o status do projeto</option>
-          <option value="PROJETO APROVADO">PROJETO APROVADO</option>
-          <option value="PROJETO EM ANDAMENTO">PROJETO EM ANDAMENTO</option>
-          <option value="PROJETO CONCLUÍDO">PROJETO CONCLUÍDO</option>
-          <option value="PROJETO CANCELADO">PROJETO CANCELADO</option>
-        </select>
+        <label class="form-label" for="status">Status/Observação:</label>
+        <p style="font-size: 13px;" >(Após 32 caracteres haverá uma quebra de linha no carimbo) </p>
+        <input name="status" type="text" id="status" class="form-control" title="">
+
       </div>
       <div class="mb-3">
         <label class="form-label">N° do Processo:</label>
-        <input name="processo" required type="text" class="form-control">
+        <input name="processo" type="text" class="form-control">
       </div>
 
       <!-- Campos ocultos -->
@@ -374,8 +373,7 @@ window.addEventListener('resize', rescaleStampOnCanvasResize);
     hy && (hy.value = String(Math.round(r.y)));
     hw && (hw.value = String(Math.round(r.w)));
     hh && (hh.value = String(Math.round(r.h)));
-    pushHiddenStamp();
-
+    pushHiddenCanvasSize();
   }
   function getPoint(ev){
     const rect = stage.getBoundingClientRect();
@@ -551,7 +549,7 @@ let currentRenderTask = null;
 async function renderPDFPage(n){
   // token para evitar corrida
   const myToken = ++renderToken;
-  if (hpage) hpage.value = String(n);
+
   // mostra pdfCanvas e esconde imgCanvas
   pdfCanvas.style.display = 'block';
   imgCanvas.style.display = 'none';

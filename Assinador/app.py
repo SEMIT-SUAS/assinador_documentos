@@ -1,5 +1,4 @@
 
-
 # Assinador de Documentos (Flask + PyMuPDF + PIL) - com segurança integrada (auth.py)
 # ------------------------------------------------------------------------------------
 import os, textwrap, hashlib
@@ -26,9 +25,7 @@ from auth import (
 )
 
 app = Flask(__name__)
-@app.get("/health")
-def health():
-    return "OK", 200
+
 # ------------------ Config de Banco ------------------
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
     "DATABASE_URL",
@@ -84,13 +81,14 @@ def build_verification_url(crc: str) -> str:
     """
     base = os.environ.get("PUBLIC_BASE_URL")
     if base:
-        return f"{base.rstrip('/')}{url_for('verificar', crc=crc)}"
-    return url_for('verificar', crc=crc, _external=True)
+        return f"{base.rstrip('/')}{url_for('verificar')}"
+    return url_for('verificar', _external=True)
 
-
-def make_qr_image(data: str, box_size: int = 6, border: int = 4, strong: bool = True):
+def make_qr_image(data: str, box_size: int = 12, border: int = 8, strong: bool = True):
     """
-    Gera QR nítido (sem borrão), já no tamanho final 50x50.
+    Gera QR nítido com quiet zone maior.
+    - box_size: pixels por módulo (maior = mais nítido ao reduzir fisicamente)
+    - border:   quiet zone em módulos (>=4 recomendado; usamos 8 para garantir)
     """
     qr = qrcode.QRCode(
         version=None,
@@ -100,9 +98,11 @@ def make_qr_image(data: str, box_size: int = 6, border: int = 4, strong: bool = 
     )
     qr.add_data(data)
     qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white").convert("RGB")
-    return img.resize((50, 50), resample=Image.NEAREST)
+    # Preto puro em fundo branco, sem alpha e sem downscale
+    return qr.make_image(fill_color="black", back_color="white").convert("RGB")
 
+def to_upper(s: str) -> str:
+    return (s or "").strip().upper()
 
 @app.context_processor
 def toast_utils():
@@ -162,7 +162,7 @@ def cadastro():
         nome         = (request.form.get("nome") or "").strip()
         email        = (request.form.get("email") or "").strip().lower()
         setor        = (request.form.get("setor") or "").strip()
-        orgao        = (request.form.get("orgao") or "").strip()
+        orgao        = to_upper(request.form.get("orgao") or "").strip()
         matricula    = (request.form.get("matricula") or "").strip()
         cargo        = (request.form.get("cargo") or "").strip()
         editar_email = (request.form.get("editar_email") or "").strip().lower()
@@ -262,6 +262,8 @@ def editar(email):
     return redirect(url_for("cadastro", email=unquote(email).strip().lower()))
 
 
+
+
 @app.post("/usuarios/excluir")
 
 @admin_required
@@ -287,11 +289,10 @@ def assinar():
     usr = session.get("user") or {}
     nome = usr.get("nome") or "Desconhecido"
     cpf_masked = usr.get("cpf") or "***********"
-    orgao = usr.get("orgao") or ""
-    matricula = usr.get("matricula") or ""
+    orgao = usr.get("orgao") or "Deve aparecer o orgao"
     
     if request.method == "GET":
-        return render_template("assinar.html", nome=nome, cpf=cpf_masked, orgao=orgao, matricula=matricula)
+        return render_template("assinar.html", nome=nome, cpf=cpf_masked, orgao=orgao)
 
     if not validate_csrf_from_form():
         return render_template("assinar.html", nome=nome, cpf=cpf_masked, orgao=orgao, erro="❌ CSRF inválido. Recarregue a página.")
@@ -303,7 +304,7 @@ def assinar():
         return render_template("assinar.html", nome=nome, cpf=cpf_masked, orgao=orgao, erro="❌ Arquivo inválido.")
 
     # Campos extras
-    
+    matricula = (request.form.get('matricula') or '').strip()
     status = (request.form.get('status', '') or '').strip()
     cargo = (request.form.get('cargo', '') or '').strip()
     processo = (request.form['processo'] or '').strip()
@@ -361,19 +362,30 @@ def assinar():
 
     _datahora = _agora.strftime('%d/%m/%Y %H:%M')
 
+    # --- CONFIGS de quebra e fontes ---
+    STATUS_WRAP_CHARS = 32  # limite de caracteres por linha do STATUS
+
     linhas = [
-        "Assinado digitalmente por",
+        "Assinado eletrônicamente por",
         f"{nome}",
         f"{cpf_masked}",
-        f"Matrícula: {matricula}", 
-        f"{orgao}", 
-        (status or ""),
-        f"Processo nº: {processo}",
-        f"em: {_datahora}",
-        f"CRC: {crc}",
+        (f"Matrícula: {matricula}" if matricula else ""),
+        f"{orgao}",
+        # (STATUS será renderizado JÁ JÁ, aqui logo após o órgão)
     ]
 
+    if processo:
+        linhas.append(f"Processo n°: {processo}")
+
     
+    linhas.extend([
+        f"em: {_datahora}",
+        f"CRC: {crc}",
+    ])
+
+    linhas = [l for l in linhas if l and l.strip()]
+
+
     try:
         if extensao == '.pdf':
             doc = fitz.open(caminho_upload)
@@ -405,23 +417,24 @@ def assinar():
 
             
             # ===== Escala pelo tamanho do retângulo (base pensado para A4) =====
-            BASE_W = 190.0   # largura útil de referência
-            BASE_H = 180.0   # altura útil de referência
+            BASE_W = 190.0  
+            BASE_H = 180.0  
 
             s_w = ponto_w / BASE_W
             s_h = ponto_h / BASE_H
             s = max(0.6, min(4.0, min(s_w, s_h)))  # trava entre 60% e 400%
 
-            # tamanhos em pontos (PDF)
-            qr_w = int(round(35 * s))
-            qr_h = int(round(35 * s))
+            # mínimo ~20 mm (≈ 56.7 pt) para boa leitura
+            MIN_QR_PT_PDF = 25
+            qr_w = qr_h = max(MIN_QR_PT_PDF, int(round(35 * s)))
+
             brasao_w = int(round(25 * s))
             brasao_h = int(round(35 * s))
             gap_pt = int(round(6 * s))
 
-            font_size_normal = max(6, int(round(9 * s)))
-            font_size_status = max(8, int(round(13 * s)))
-            espaco_entre_linhas = max(8, int(round(12 * s)))
+            font_size_normal  = max(6, int(round(9 * s)))
+            font_size_status  = max(6, int(round(11 * s)))  # menor que o normal
+            espaco_entre_linhas = max(8, int(round(11 * s)))
 
             # Centraliza ícones no topo do retângulo
             total_icons_w = qr_w + gap_pt + brasao_w
@@ -446,31 +459,55 @@ def assinar():
             # Texto (logo abaixo dos ícones)
             inicio_y_texto = y_icones + max(qr_h, brasao_h) + int(round(8 * s))
 
+            def desenha_linha(texto, fonte_pt):
+                """Desenha uma linha (com wrap) centralizada no retângulo."""
+                nonlocal inicio_y_texto
+                chars_por_linha = max(20, int((ponto_w - 16) / (fonte_pt * 0.6)))
+                for sub in textwrap.wrap(texto, width=chars_por_linha):
+                    largura_sub = fitz.get_text_length(sub, fontname="helv", fontsize=fonte_pt)
+                    x_sub = ponto_x + (ponto_w - largura_sub) / 2
+                    page.insert_text(
+                        (x_sub, inicio_y_texto),
+                        sub,
+                        fontsize=fonte_pt,
+                        fontname="helv",
+                        color=(0, 0, 0)
+                    )
+                    inicio_y_texto += espaco_entre_linhas
+
+            def desenha_status_depois_do_orgao():
+                """Desenha o STATUS (se existir) com fonte menor e wrap, com respiros."""
+                nonlocal inicio_y_texto
+                if not status:
+                    return
+                for sub in textwrap.wrap(status, width=STATUS_WRAP_CHARS):
+                    largura_sub = fitz.get_text_length(sub, fontname="helv", fontsize=font_size_status)
+                    x_central = ponto_x + (ponto_w - largura_sub) / 2
+                    page.insert_text(
+                        (x_central, inicio_y_texto),
+                        sub,
+                        fontsize=font_size_status,  # menor
+                        fontname="helv",
+                        color=(0, 0, 0)
+                    )
+                    # espaçamento entre linhas do STATUS
+                    inicio_y_texto += font_size_status + int(round(2 * s))
+                # espaço extra após o bloco de STATUS
+                inicio_y_texto += int(round(6 * s))
+
+            # Loop principal: quando chegar na linha do órgão, injeta o STATUS logo depois
             for linha in linhas:
                 if not linha.strip():
+                    # se sobrar algo vazio (ex.: matrícula vazia que escapou), só dá um respiro leve
                     inicio_y_texto += int(round(5 * s))
                     continue
 
-                if status and linha.strip() == status.strip():
-                    largura_status = fitz.get_text_length(linha, fontname="helv", fontsize=font_size_status)
-                    x_central = ponto_x + (ponto_w - largura_status) / 2
-                    page.insert_text((x_central, inicio_y_texto), linha,
-                                    fontsize=font_size_status, fontname="helv", color=(0, 0, 0))
-                    inicio_y_texto += font_size_status - int(round(4 * s))
-                    continue
+                # desenha a linha atual com fonte "normal"
+                desenha_linha(linha, font_size_normal)
 
-                # wrap dinâmico baseado na largura disponível e no tamanho de fonte
-                chars_por_linha = max(20, int((ponto_w - 16) / (font_size_normal * 0.6)))
-                for sub in textwrap.wrap(linha, width=chars_por_linha):
-                    largura_sub = fitz.get_text_length(sub, fontname="helv", fontsize=font_size_normal)
-                    x_sub = ponto_x + (ponto_w - largura_sub) / 2
-                    page.insert_text((x_sub, inicio_y_texto), sub,
-                                    fontsize=font_size_normal, fontname="helv", color=(0, 0, 0))
-                    inicio_y_texto += espaco_entre_linhas
-
-                if linha.startswith("Data/Hora:") or linha.startswith("Matrícula:"):
-                    inicio_y_texto += int(round(6 * s))
-
+                # se esta linha é o órgão, desenha o STATUS logo em seguida
+                if linha.strip() == f"{orgao}".strip():
+                    desenha_status_depois_do_orgao()
 
 
             # Salva
@@ -484,7 +521,7 @@ def assinar():
 
             signed_url = f"/static/arquivos/assinados/{nome_final}"
             return render_template(
-                "assinar.html", nome=nome, cpf=cpf_masked, orgao=orgao, matricula=matricula,
+                "assinar.html", nome=nome, cpf=cpf_masked, orgao=orgao,
                 show_result=True, is_pdf=True, signed_url=signed_url, arquivo=nome_final,
                 sha256_hex=sha256_hex
             )
@@ -557,7 +594,7 @@ def assinar():
 
             signed_url = f"/static/arquivos/assinados/{nome_final}"
             return render_template(
-                "assinar.html", nome=nome, cpf=cpf_masked, orgao=orgao, matricula=matricula,
+                "assinar.html", nome=nome, cpf=cpf_masked, orgao=orgao,
                 show_result=True, is_pdf=False, signed_url=signed_url, arquivo=nome_final,
                 sha256_hex=sha256_hex
             )
@@ -565,8 +602,8 @@ def assinar():
         else:
             if os.path.exists(qr_path):
                 os.remove(qr_path)
-            return render_template("assinar.html", nome=nome, cpf=cpf_masked, orgao=orgao, matricula=matricula,
-                 erro="❌ Formato não suportado. Envie PDF/JPG/PNG.")
+            return render_template("assinar.html", nome=nome, cpf=cpf_masked, orgao=orgao,
+                                   erro="❌ Formato não suportado. Envie PDF/JPG/PNG.")
 
     except Exception as e:
         try:
@@ -574,7 +611,7 @@ def assinar():
                 os.remove(qr_path)
         except Exception:
             pass
-        return render_template("assinar.html", nome=nome, cpf=cpf_masked, orgao=orgao, matricula=matricula, erro=f"❌ Erro ao assinar: {e}")
+        return render_template("assinar.html", nome=nome, cpf=cpf_masked, orgao=orgao, erro=f"❌ Erro ao assinar: {e}")
 
 def sha256_of_file(path: str) -> str:
     h = hashlib.sha256()

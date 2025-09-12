@@ -121,7 +121,7 @@
               <label class="form-label" for="orgao">Orgão</label>
               <div class="input-group input-group-lg has-icon">
                 <span class="input-group-text" aria-hidden="true"><i class="bi bi-person-fill"></i></span>
-                <input type="text" class="form-control" id="orgao" name="orgao"
+                <input type="text" class="form-control text-uppercase" id="orgao" name="orgao"
                   value="{{ usuario_editar.orgao if usuario_editar else '' }}" required>
                 <div class="invalid-feedback">Informe o orgão.</div>
               </div>
@@ -302,6 +302,22 @@ required>
 
       input?.addEventListener('input', update);
     })();
+
+    // Força MAIÚSCULAS no campo Orgão enquanto digita
+    (function () {
+      const orgao = document.getElementById('orgao');
+      if (!orgao) return;
+      // exibe em maiúsculas (CSS) e também altera o value enviado
+      orgao.style.textTransform = 'uppercase';
+      orgao.addEventListener('input', () => {
+        orgao.value = orgao.value.toUpperCase();
+      });
+      // normaliza valor inicial (edição)
+      orgao.value = (orgao.value || '').toUpperCase();
+    })();
+
+
+
   </script>
 </body>
 </html>
