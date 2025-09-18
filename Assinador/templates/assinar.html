@@ -50,7 +50,7 @@
       <div class="alert alert-danger">{{ erro }}</div>
     {% endif %}
 
-    <!-- STAGE -->
+    <!-- STAGE - carimbo -->
     <div id="canvasContainer" class="mb-3">
       <div id="stage" class="stage">
         <canvas id="imgCanvas" class="is-loading"></canvas>
@@ -99,19 +99,19 @@
 
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-      <!-- Arquivo -->
+      <!-- Arquivo a ser selecionado -->
       <div class="mb-3">
         
-        <input id="arquivo-upload" accept=".png,.jpg,.jpeg,.pdf" name="arquivo" onchange="handleFile(this)" required type="file" class="d-none">
+        <input id="arquivo-upload" accept=".pdf" name="arquivo" onchange="handleFile(this)" required type="file" class="d-none">
         <label class="btn btn-secondary" for="arquivo-upload">Escolher arquivo</label>
         <label class="form-label">(.pdf):</label>
         
       </div>
 
-      <!-- Centralizar -->
+      <!-- Centralizar  carimbo -->
       <div id="centralizar-button" class="mb-3">
         <button type="button" id="btnCenterH" class="btn btn-outline-primary btn-icon" 
-        title="Posicina o carimbo bem no meio da largura da folha, nem para a esquerda, nem para a direita.">
+        title="Posiciona o carimbo bem no meio da largura da folha, nem para a esquerda, nem para a direita.">
           <img width="20" height="20" src="https://img.icons8.com/ios-filled/24/A1A3A6/resize-horizontal.png" alt="">
           Centralizar Horizontal
         </button>
@@ -141,10 +141,10 @@
       <input id="page" name="page" type="hidden" value="1"/>
 
       <div class="assinar-doc">
-        <button class="btn btn-primary" type="submit">✔ Assinar Documento</button>
+        <button class="btn btn-primary" type="submit"><img width="20" height="20" src="https://img.icons8.com/ios-glyphs/30/FFFFFF/checkmark--v1.png" alt="checkmark--v1"/> Assinar Documento</button>
         <div class="assinar-doc-2">
-          <button class="btn btn-danger px-5" onclick="resetForm()" type="button">🧹 Limpar</button>
-          <button class="btn btn-secondary px-5" onclick="location.href='/'" type="button">↩ Voltar</button>
+          <button class="btn btn-danger px-5" onclick="resetForm()" type="button"><img width="13" height="13" src="https://img.icons8.com/tiny-glyph/16/FFFFFF/broom.png" alt="broom"/>  Limpar</button>
+          <button class="btn btn-secondary px-5" onclick="location.href='/'" type="button"><img width="16" height="16" src="https://img.icons8.com/forma-bold/24/FFFFFF/return.png" alt="return"/> Voltar</button>
         </div>
         
       </div>
@@ -707,6 +707,7 @@ async function renderPDFPage(n){
         }).catch(() => { hide(canvasEl); show(fb); });
       }
     })();
+    
   </script>
   {% endif %}
 </body>

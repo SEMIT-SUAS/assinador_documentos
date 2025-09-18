@@ -288,7 +288,23 @@ def excluir():
 def assinar():
     usr = session.get("user") or {}
     nome = usr.get("nome") or "Desconhecido"
-    cpf_masked = usr.get("cpf") or "***********"
+    
+    # 1. Obtenha o CPF completo.
+    cpf_completo = usr.get("cpf")
+
+    # 2. Se o CPF existir, remova qualquer caractere que não seja um dígito.
+    if cpf_completo:
+        cpf_numeros = re.sub(r'[^0-9]', '', cpf_completo)
+    else:
+        cpf_numeros = ""
+    
+    # 3. Formate o CPF para mostrar apenas os 5 primeiros dígitos.
+    if cpf_numeros and len(cpf_numeros) >= 5:
+        cpf_masked = f"{cpf_numeros[:5]}******"
+    else:
+        # Se não houver números suficientes, use o valor padrão.
+        cpf_masked = "***********"
+
     orgao = usr.get("orgao") or "Deve aparecer o orgao"
     
     if request.method == "GET":
